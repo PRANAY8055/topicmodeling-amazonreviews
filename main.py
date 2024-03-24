@@ -14,17 +14,18 @@ df = pd.read_csv('./electronics_sample.csv')
 df.drop('summary', axis=1, inplace=True)
 df.dropna(subset=['reviewText'], inplace=True)
 stop_words = set(stopwords.words('english'))
+stop_words.update(["i've", "i'am", "i'm"])
 
 def preprocess_text(text):
     text = text.lower()
     
     tokens = text.split()
     
+    tokens = [word for word in tokens if word not in stop_words]
+    
     lemmatizer = WordNetLemmatizer()
     
     tokens = [lemmatizer.lemmatize(word, pos='v') for word in tokens]
-    
-    tokens = [word for word in tokens if word not in stop_words]
     
     text = ' '.join(tokens)
     
