@@ -23,13 +23,17 @@ def preprocess_text(text):
     
     tokens = [word for word in tokens if word not in stop_words]
     
+    text = ' '.join(tokens)
+    
+    text = re.sub(r'[^a-z\s]', '', text) 
+    
+    tokens = text.split()
+    
     lemmatizer = WordNetLemmatizer()
     
     tokens = [lemmatizer.lemmatize(word, pos='v') for word in tokens]
     
     text = ' '.join(tokens)
-    
-    text = re.sub(r'[^a-z\s]', '', text)  
     
     return text
 
