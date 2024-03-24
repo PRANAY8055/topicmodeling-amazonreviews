@@ -4,3 +4,4 @@ __pycache__
 clusters.csv
 utils.py
 wordcloud.png
+.DS_Store

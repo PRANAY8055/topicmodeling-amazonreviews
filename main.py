@@ -1,7 +1,6 @@
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from wordcloud import WordCloud
 
 import pandas as pd
 import numpy as np
@@ -15,8 +14,6 @@ df = pd.read_csv('./electronics_sample.csv')
 df.drop('summary', axis=1, inplace=True)
 df.dropna(subset=['reviewText'], inplace=True)
 stop_words = set(stopwords.words('english'))
-
-stop_words.update(["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "star"])
 
 def preprocess_text(text):
     text = text.lower()
@@ -62,53 +59,7 @@ def tokenization():
     
 top_words, top_words_with_scores = tokenization()
 
-print("Top 10 words with their TF-IDF scores:")
 for word, score in top_words_with_scores:
     print(f"Word: {word}, TF-IDF Score: {score}")
     
     
-from gensim.models import Word2Vec
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
-
-words = [top_words]
-
-word2vec_model = Word2Vec(words, vector_size=100, window=5, min_count=1, workers=4)
-
-word_vectors = [word2vec_model.wv[word] for word in top_words]
-
-pca = PCA(n_components=2)
-word_vectors_2d = pca.fit_transform(word_vectors)
-
-kmeans = KMeans(n_clusters=5)
-kmeans.fit(word_vectors_2d)
-cluster_labels = kmeans.labels_
-
-plt.scatter(word_vectors_2d[:, 0], word_vectors_2d[:, 1], c=cluster_labels, cmap='viridis')
-plt.title('Word Clusters')
-plt.xlabel('PCA Component 1')
-plt.ylabel('PCA Component 2')
-plt.colorbar(label='Cluster')
-plt.show()
-
-# Initialize an empty dictionary to store word clusters
-word_clusters = {}
-
-# Iterate over each word and its corresponding cluster label
-for word, cluster_label in zip(top_words, cluster_labels):
-    # Check if the cluster label already exists in the dictionary
-    if f"cluster-{cluster_label + 1}" not in word_clusters:
-        # If the cluster label doesn't exist, create a new list for it
-        word_clusters[f"cluster-{cluster_label + 1}"] = [word]
-    else:
-        # If the cluster label already exists, append the word to its list
-        word_clusters[f"cluster-{cluster_label + 1}"].append(word)
-
-# Print the word clusters
-for cluster, words in word_clusters.items():
-    print(f"{cluster}: {words}")
-
-df_clusters = pd.DataFrame(word_clusters.items(), columns=['Cluster', 'Words'])
-
-df_clusters.to_csv('./clusters.csv', index=False)
