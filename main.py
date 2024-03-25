@@ -68,30 +68,26 @@ top_words, top_words_with_scores, vectorizer, tfidf_matrix  = tokenization()
 
 for word, score in top_words_with_scores:
     print(f"Word: {word}, TF-IDF Score: {score}")
-    
+
 anchor_words = [
-   [ 'sound', 'time', 'battery', 'back', 'charge', 'power', 'tv', 'light', 'mouse', 'keyboard', 'camera', 'case' , 
-    'lens', 'cable', 'speakers', 'headphones'], # Product description
+   ['sound', 'battery', 'charge', 'power', 'tv', 'light', 'mouse', 'keyboard', 'camera', 'case', 'lens', 'cable', 'speakers', 'quality', 'usb'], # Product Features and Quality
 
-    ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'number', 'eight', 'nine', 'ten', 'count', 'quantity'], # Quantity
-
-    ['price','cash',  'money', 'purchase',  'budget',  'pay', 'card'], # Price
-
-    [ 'good','nice', 'better', 'look', 'love', 'break', 'problem', 'issue', 'great', 
-     'disappoint', 'worst', 'trouble', 'poor'], # Opinion
-    
-    ['work','buy','well','need','time','little','really','expect',
-     'much','perfect','easy','recommend','quality'] # Behaviour of the product
+   ['star', 'five', 'four', 'three', 'two', 'one'], # Quantitative Assessments
+   
+   ['price', 'money', 'purchase', 'budget', 'pay', 'cheap', 'expensive', 'value', 'cost'], # Price and Value
+   
+   ['good', 'great', 'nice','fantastic', 'better', 'love', 'poor', 'disappoint', 'excellent', 'bad', 'problem', 'issue', 'break', 'worst'], # Customer Opinions and Sentiment
+   
+   ['work', 'buy', 'use', 'get', 'well', 'need', 'easy', 'expect', 'recommend', 'perfect', 'return', 'try', 'fit'] # Usage and Experience
 ]
 
 doc_word = ss.csr_matrix(tfidf_matrix)
 doc_word.shape # n_docs x m_words
 words = list(np.asarray(vectorizer.get_feature_names()))
 
-no_of_topics = len(anchor_words)
-anchor_strength = 5
-topic_model = ct.Corex(n_hidden=no_of_topics, seed=2)
-topic_model.fit(doc_word, words=words, anchors=anchor_words, anchor_strength=anchor_strength)
+topic_model = ct.Corex(n_hidden=5, max_iter = 12000, seed=2)
+topic_model.fit(doc_word, words=words, anchors=anchor_words, anchor_strength = 30)
+
 
 for n in range(len(anchor_words)):
     topic_words,_,_ = zip(*topic_model.get_topics(topic=n))
@@ -101,11 +97,9 @@ for n in range(len(anchor_words)):
 # Predict anchor topics for new sentences
 # Assuming 'new_sentences' is a list of new sentences to predict topics for
 
-new_sentences = ['This product is really waste of money', 'Works well, I bought more than five times']
+new_sentences = ["These are fantastic speakers for the price.  I purchased the RTi4 instead of the A1's.  They are identical in all respects except some exterior detailing."]
 
 X_new = vectorizer.transform(new_sentences)
 predicted_topics = topic_model.predict(X_new)
+
 print(predicted_topics)
-
-
-
