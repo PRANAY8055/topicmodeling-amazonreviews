@@ -51,11 +51,11 @@ def tokenization():
     
     vectorizer = TfidfVectorizer()
     tfidf_matrix = vectorizer.fit_transform(df['processed_reviewText'])
-
+    
     words = vectorizer.get_feature_names_out()
-
+    
     mean_tfidf_scores = tfidf_matrix.mean(axis=0)
-
+    
     sorted_indices = mean_tfidf_scores.argsort()[0, ::-1]
     sorted_indices = np.asarray(sorted_indices).flatten()
     
@@ -73,16 +73,16 @@ top_words, top_words_with_scores, vectorizer, tfidf_matrix  = tokenization()
 # From the top high frequency words we got from the TFIDF vectorizer
 # we would generate the topics with each topic contains some anchor words
 anchor_words = [
-    ['work', 'last', 'break', 'reliable', 'durable', 'faulty', 'malfunction', 'defect'],  # Product Performance and Reliability
-    ['good', 'great', 'excellent', 'bad', 'poor', 'disappoint', 'satisfy', 'happy', 'unhappy'],  # Customer Satisfaction and Sentiment
-    ['easy', 'use', 'convenient', 'simple', 'difficult'],  # Usability and Convenience
+    ['work', 'last', 'break', 'reliable', 'durable', 'performance', 'faulty', 'malfunction', 'defect'],  # Product Performance and Reliability
+    ['good', 'great', 'excellent', 'impress', 'bad', 'feel', 'poor', 'disappoint', 'satisfy', 'happy', 'unhappy'],  # Customer Satisfaction and Sentiment
+    ['easy', 'use', 'weak', 'issue', 'response', 'convenient', 'simple', 'difficult'],  # Usability and Convenience
     ['price', 'cheap', 'expensive', 'value', 'money', 'worth', 'affordable'],  # Price and Value for Money
-    ['quality', 'sound', 'battery', 'power', 'screen', 'resolution', 'storage', 'capacity'],  # Product Features and Specifications
+    ['quality', 'sound', 'software', 'battery', 'power', 'screen', 'resolution', 'storage', 'capacity'],  # Product Features and Specifications
     ['look', 'design', 'style', 'appearance', 'aesthetic', 'build', 'material'],  # Product Aesthetics and Design
     ['last', 'durable', 'longevity', 'wear', 'tear', 'break', 'maintenance'],  # Product Durability and Longevity
     ['return', 'warranty', 'service', 'support', 'refund', 'exchange'],  # Customer Service and Warranty
     ['setup', 'install', 'ready', 'configure', 'assembly', 'manual', 'guide'],  # Ease of Setup and Installation
-    ['connect', 'compatible', 'wireless', 'plug', 'interface', 'sync']  # Connectivity and Compatibility
+    ['connect', 'compatible', 'signal', 'connectivity', 'network', 'wireless', 'plug', 'interface', 'sync']  # Connectivity and Compatibility
 ]
 
 doc_word = ss.csr_matrix(tfidf_matrix)
@@ -109,19 +109,24 @@ for i, topic in enumerate(filtered_topics):
     print(f"Topic: {topic_names[i]}: {', '.join(topic)}")
 
 # Prediction of reviews into the topics using the corex model
+reviews = pd.read_csv('./reviews_test.csv')
 
-reviews = pd.read_csv('./reviews_test.csv')['reviews'].tolist()
-
+'''
 # Function to preprocess reviews with filtered words
 def preprocess_with_filtered_words(document, filtered_words):
+    print(filtered_words)
     tokens = document.lower().split()
     filtered_tokens = [token for token in tokens if token in filtered_words]
     return ' '.join(filtered_tokens)
 
-flattened_reviews = [review[0] for review in reviews]
 all_filtered_words = set(word for topic in filtered_topics for word in topic)
 
 preprocessed_reviews = [preprocess_with_filtered_words(review, all_filtered_words) for review in flattened_reviews]
+'''
+
+flattened_reviews = [review for review in reviews['reviews']]
+
+preprocessed_reviews = reviews['reviews'].apply(preprocess_text).tolist()
 
 X_new = vectorizer.transform(preprocessed_reviews)
 predicted_topics = topic_model.predict(X_new)
