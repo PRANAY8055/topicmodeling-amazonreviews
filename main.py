@@ -18,6 +18,8 @@ df.dropna(subset=['reviewText'], inplace=True)
 stop_words = set(stopwords.words('english'))
 stop_words.update(["i've", "i'am", "i'm"])
 
+# This is the first stage of the flow
+# Pre-processing the text
 def preprocess_text(text):
     text = text.lower()
     
@@ -43,6 +45,8 @@ df['processed_reviewText'] = df['reviewText'].apply(preprocess_text)
 
 df.to_csv('./processed_electronics_reviews.csv', index=False)
 
+# We applied TfidfVectorizer to transform the text into a meaningful numerical representation. 
+# The word with the high frequency in the document is given a high score.
 def tokenization():
     
     vectorizer = TfidfVectorizer()
@@ -66,6 +70,8 @@ def tokenization():
     
 top_words, top_words_with_scores, vectorizer, tfidf_matrix  = tokenization()
 
+# From the top high frequency words we got from the TFIDF vectorizer
+# we would generate the topics with each topic contains some anchor words
 anchor_words = [
     ['work', 'last', 'break', 'reliable', 'durable', 'faulty', 'malfunction', 'defect'],  # Product Performance and Reliability
     ['good', 'great', 'excellent', 'bad', 'poor', 'disappoint', 'satisfy', 'happy', 'unhappy'],  # Customer Satisfaction and Sentiment
@@ -83,6 +89,8 @@ doc_word = ss.csr_matrix(tfidf_matrix)
 doc_word.shape # n_docs x m_words
 words = list(np.asarray(vectorizer.get_feature_names_out()))
 
+# Initialize a Corex topic model with 10 topics, maximum 12000 iterations.
+# Fit the Corex model to the TF-IDF document-word matrix using words as vocabulary and anchor words
 topic_model = ct.Corex(n_hidden=10, max_iter = 12000, seed=2)
 topic_model.fit(doc_word, words=words, anchors=anchor_words, anchor_strength = 15)
 
@@ -100,8 +108,11 @@ topic_names=['Product Performance and Reliability', 'Customer Satisfaction and S
 for i, topic in enumerate(filtered_topics):
     print(f"Topic: {topic_names[i]}: {', '.join(topic)}")
 
+# Prediction of reviews into the topics using the corex model
+
 reviews = pd.read_csv('./reviews_test.csv')['reviews'].tolist()
 
+# Function to preprocess reviews with filtered words
 def preprocess_with_filtered_words(document, filtered_words):
     tokens = document.lower().split()
     filtered_tokens = [token for token in tokens if token in filtered_words]
