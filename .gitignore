@@ -5,3 +5,5 @@ clusters.csv
 utils.py
 wordcloud.png
 .DS_Store
+corex_topic_example.ipynb
+.ipynb_checkpoints
