@@ -105,6 +105,7 @@ threshold = 0.03  # Define your threshold
 filtered_topics = [filter_topic_words(topic, threshold) for topic in topics_with_scores]
 
 topic_names=['Product Performance and Reliability', 'Customer Satisfaction and Sentiment', 'Usability and Convenience', 'Price and Value for Money', 'Product Features and Specifications','Product Aesthetics and Design','Product Durability and Longevity', 'Customer Service and Warranty', 'Ease of Setup and Installation', 'Connectivity and Compatibility'   ]
+
 for i, topic in enumerate(filtered_topics):
     print(f"Topic: {topic_names[i]}: {', '.join(topic)}")
 
