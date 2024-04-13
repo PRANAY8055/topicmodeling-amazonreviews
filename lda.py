@@ -5,21 +5,17 @@ Created on Wed Mar 27 18:09:42 2024
 @author: Sreekar
 """
 
-import numpy as np
 import pandas as pd
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import re
 import gensim
-from gensim import matutils, models
-import scipy.sparse
-from gensim import corpora, models
+from gensim import corpora
 from collections import defaultdict
 import operator
 import pprint
 
-from sklearn.feature_extraction.text import CountVectorizer
 nltk.download('omw-1.4')
 nltk.download('stopwords')
 nltk.download('wordnet')
@@ -27,21 +23,36 @@ nltk.download('wordnet')
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 
-csv_path = r'C:\Users\Sreekar\Downloads\electronics_sample.csv\electronics_sample.csv' 
-reviews_df = pd.read_csv(csv_path)
+reviews_df = pd.read_csv('./electronics_sample.csv')
+reviews_df.drop('summary', axis=1, inplace=True)
+reviews_df.dropna(subset=['reviewText'], inplace=True)
 
-def advanced_preprocess(text):
-    # Check if the input is a string, return an empty string if not
-    if not isinstance(text, str):
-        return ''
-    
+stop_words.update(["i've", "i'am", "i'm"])
+
+# This is the first stage of the flow
+# Pre-processing the text
+def preprocess_text(text):
     text = text.lower()
-    text = re.sub(r'[^a-zA-Z\s]', '', text)
-    # Tokenization
+    
     tokens = text.split()
-    tokens = [lemmatizer.lemmatize(token) for token in tokens if token not in stop_words]
-    return ' '.join(tokens)
-reviews_df['processed_reviews'] = reviews_df['reviewText'].apply(advanced_preprocess)    
+    
+    tokens = [word for word in tokens if word not in stop_words]
+    
+    text = ' '.join(tokens)
+    
+    text = re.sub(r'[^a-z\s]', '', text) 
+    
+    tokens = text.split()
+    
+    lemmatizer = WordNetLemmatizer()
+    
+    tokens = [lemmatizer.lemmatize(word, pos='v') for word in tokens]
+    
+    text = ' '.join(tokens)
+    
+    return text
+
+reviews_df['processed_reviews'] = reviews_df['reviewText'].apply(preprocess_text)
 
 tokenized_reviews = [doc.split() for doc in reviews_df['processed_reviews']]
 
@@ -81,4 +92,5 @@ reviews_df['topics'] = [
     [topic_num for topic_num, prop_topic in lda_model.get_document_topics(corp) if prop_topic >= threshold]
     for corp in corpus
 ]
+
 print(reviews_df[['reviewText', 'topics']].head())

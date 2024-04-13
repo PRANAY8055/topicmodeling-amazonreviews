@@ -11,6 +11,7 @@ import re
 
 nltk.download('stopwords')
 nltk.download('wordnet')
+lemmatizer = WordNetLemmatizer()
 
 df = pd.read_csv('./electronics_sample.csv')
 df.drop('summary', axis=1, inplace=True)
@@ -32,8 +33,6 @@ def preprocess_text(text):
     text = re.sub(r'[^a-z\s]', '', text) 
     
     tokens = text.split()
-    
-    lemmatizer = WordNetLemmatizer()
     
     tokens = [lemmatizer.lemmatize(word, pos='v') for word in tokens]
     
