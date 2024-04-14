@@ -254,3 +254,46 @@ for i, topic_presence in enumerate(predicted_topics):
 #     X_new = vectorizer.transform(reviews[i])
 #     predicted_topics = topic_model.predict(X_new)
 #     print(predicted_topics)
+
+
+
+
+
+#Total correlation plot
+import matplotlib.pyplot as plt
+plt.figure(figsize=(10,5))
+plt.bar(range(topic_model.tcs.shape[0]), topic_model.tcs, color='#4e79a7', width=0.5)
+plt.xlabel('Topic', fontsize=16)
+plt.ylabel('Total Correlation (nats)', fontsize=16);
+
+
+
+# Calculating coherence score for each topic abd ploting the coherennce scores
+documents = df['processed_reviewText'].tolist()
+tokenized_documents = [doc.split() for doc in documents]
+from gensim.corpora import Dictionary
+from gensim.models import CoherenceModel
+# Create a Gensim dictionary from the tokenized documents
+dictionary = Dictionary(tokenized_documents)
+# Create a Gensim corpus using the dictionary
+corpus = [dictionary.doc2bow(text) for text in tokenized_documents]
+topic_coherence_scores = []
+for i, topic in enumerate(filtered_topics):
+    # Calculate coherence for this topic
+    coherence_model_topic = CoherenceModel(topics=[topic], texts=tokenized_documents, dictionary=dictionary, coherence='c_v')
+    coherence_score_topic = coherence_model_topic.get_coherence()
+    topic_coherence_scores.append(coherence_score_topic)
+    print(f"Coherence Score for Topic {i+1} (C_V): {coherence_score_topic}")
+# calculate the average coherence across all topics
+average_coherence = sum(topic_coherence_scores) / len(topic_coherence_scores)
+print(f"Average Coherence Score (C_V): {average_coherence}")
+
+topic_labels = [f'Topic {i+1}' for i in range(len(filtered_topics))] #we can also use topic_names for labels
+coherence_df = pd.DataFrame({'Coherence Score': topic_coherence_scores}, index=topic_labels)
+
+# Plotting the heatmap
+plt.figure(figsize=(10, 8))
+sns.heatmap(coherence_df[['Coherence Score']], annot=True, cmap='Reds', fmt=".2f", linewidths=.5, cbar_kws={'label': 'Coherence Score'})
+plt.title('Coherence Scores of Topics')
+plt.ylabel('Topics')
+plt.show()
