@@ -138,10 +138,12 @@ for i, topic in enumerate(filtered_topics):
 
 
 
-# topics=['Product Performance and Reliability', 'Customer Satisfaction and Sentiment', 'Usability and Convenience', 'Price and Value for Money', 'Product Features and Specifications','Product Aesthetics and Design','Product Durability and Longevity', 'Customer Service and Warranty', 'Ease of Setup and Installation', 'Connectivity and Compatibility'   ]
-# for n in range(len(anchor_words)):
-#     topic_words,_,_ = zip(*topic_model.get_topics(topic=n))
-#     print('{}: '.format(n) + '{}: '.format(topics[n]) + ', '.join(topic_words))
+topic_words_all = []
+for n in range(len(anchor_words)):
+    topic_words,_,_ = zip(*topic_model.get_topics(topic=n))
+    topic_words_all.append(list(topic_words))
+    print('{}: '.format(n) + '{}: '.format(topic_names[n]) + ', '.join(topic_words))
+print(f'correlation: {topic_model.tc}')
 
 
 # Predict anchor topics for new sentences
@@ -278,7 +280,7 @@ dictionary = Dictionary(tokenized_documents)
 # Create a Gensim corpus using the dictionary
 corpus = [dictionary.doc2bow(text) for text in tokenized_documents]
 topic_coherence_scores = []
-for i, topic in enumerate(filtered_topics):
+for i, topic in enumerate(filtered_topics): #can also use topic_words_all in place of filtered_topics
     # Calculate coherence for this topic
     coherence_model_topic = CoherenceModel(topics=[topic], texts=tokenized_documents, dictionary=dictionary, coherence='c_v')
     coherence_score_topic = coherence_model_topic.get_coherence()
