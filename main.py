@@ -8,6 +8,11 @@ import scipy.sparse as ss
 import numpy as np
 import nltk
 import re
+import seaborn as sns
+
+import matplotlib.pyplot as plt
+from gensim.corpora import Dictionary
+from gensim.models import CoherenceModel
 
 nltk.download('stopwords')
 nltk.download('wordnet')
@@ -90,39 +95,21 @@ words = list(np.asarray(vectorizer.get_feature_names_out()))
 
 # Initialize a Corex topic model with 10 topics, maximum 12000 iterations.
 # Fit the Corex model to the TF-IDF document-word matrix using words as vocabulary and anchor words
-topic_model = ct.Corex(n_hidden=10, max_iter = 12000, seed=2)
+topic_model = ct.Corex(n_hidden=10, max_iter = 12000, seed=2, n_jobs=1)
 topic_model.fit(doc_word, words=words, anchors=anchor_words, anchor_strength = 15)
 
 topics_with_scores = [topic_model.get_topics(topic=n, n_words=10) for n in range(topic_model.n_hidden)]
 
-def filter_topic_words(topic_words_scores, threshold=0.1):
-    return [word for word, score, *_ in topic_words_scores if score >= threshold]
+topic_words_all = []
 
-topics_with_scores = [topic_model.get_topics(topic=n, n_words=-1) for n in range(topic_model.n_hidden)]
-
-threshold = 0.03  # Define your threshold
-filtered_topics = [filter_topic_words(topic, threshold) for topic in topics_with_scores]
+for topic in topics_with_scores:
+    words = [word for word, score,_ in topic]
+    topic_words_all.append(words)
 
 topic_names=['Product Performance and Reliability', 'Customer Satisfaction and Sentiment', 'Usability and Convenience', 'Price and Value for Money', 'Product Features and Specifications','Product Aesthetics and Design','Product Durability and Longevity', 'Customer Service and Warranty', 'Ease of Setup and Installation', 'Connectivity and Compatibility'   ]
 
-for i, topic in enumerate(filtered_topics):
-    print(f"Topic: {topic_names[i]}: {', '.join(topic)}")
-
 # Prediction of reviews into the topics using the corex model
 reviews = pd.read_csv('./reviews_test.csv')
-
-'''
-# Function to preprocess reviews with filtered words
-def preprocess_with_filtered_words(document, filtered_words):
-    print(filtered_words)
-    tokens = document.lower().split()
-    filtered_tokens = [token for token in tokens if token in filtered_words]
-    return ' '.join(filtered_tokens)
-
-all_filtered_words = set(word for topic in filtered_topics for word in topic)
-
-preprocessed_reviews = [preprocess_with_filtered_words(review, all_filtered_words) for review in flattened_reviews]
-'''
 
 flattened_reviews = [review for review in reviews['reviews']]
 
@@ -139,4 +126,34 @@ for i, topic_presence in enumerate(predicted_topics):
     if predicted_topics_str:
         print(f"Review: {flattened_reviews[i]}\nPredicted Topics: {predicted_topics_str}\n")
     else:
-        print(f"Review: {flattened_reviews[i]}\nPredicted Topics: None\n")
+        print(f"Review: {flattened_reviews[i]}\nPredicted Topics: None\n")      
+
+# Calculating coherence score for each topic abd ploting the coherennce scores
+documents = df['processed_reviewText'].tolist()
+tokenized_documents = [doc.split() for doc in documents]
+
+# Create a Gensim dictionary from the tokenized documents
+dictionary = Dictionary(tokenized_documents)
+# Create a Gensim corpus using the dictionary
+corpus = [dictionary.doc2bow(text) for text in tokenized_documents]
+topic_coherence_scores = []
+for i, topic in enumerate(topic_words_all):
+    # Calculate coherence for this topic
+    coherence_model_topic = CoherenceModel(topics=[topic], texts=tokenized_documents, dictionary=dictionary, coherence='c_v')
+    coherence_score_topic = coherence_model_topic.get_coherence()
+    topic_coherence_scores.append(coherence_score_topic)
+    print(f"Coherence Score for Topic {i+1} (C_V): {coherence_score_topic}")
+    
+# calculate the average coherence across all topics
+average_coherence = sum(topic_coherence_scores) / len(topic_coherence_scores)
+print(f"Average Coherence Score (C_V): {average_coherence}")
+
+topic_labels = [f'Topic {i+1}' for i in range(len(topic_words_all))] #we can also use topic_names for labels
+coherence_df = pd.DataFrame({'Coherence Score': topic_coherence_scores}, index=topic_labels)
+
+# Plotting the heatmap
+plt.figure(figsize=(10, 8))
+sns.heatmap(coherence_df[['Coherence Score']], annot=True, cmap='Reds', fmt=".2f", linewidths=.5, cbar_kws={'label': 'Coherence Score'})
+plt.title('Coherence Scores of Topics')
+plt.ylabel('Topics')
+plt.show()
