@@ -70,6 +70,18 @@ lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_
 
 pprint.pprint(lda_model.print_topics())
 
+from gensim.models.coherencemodel import CoherenceModel
+
+# Compute Coherence Score using c_v measure
+coherence_model_lda = CoherenceModel(model=lda_model, texts=tokenized_reviews, dictionary=id2word, coherence='c_v')
+coherence_score_lda = coherence_model_lda.get_coherence()
+print('\nCoherence Score (c_v): ', coherence_score_lda)
+# Compute Coherence Score using u_mass measure
+umass_model_lda = CoherenceModel(model=lda_model, texts=tokenized_reviews, dictionary=id2word, coherence='u_mass')
+umass_score_lda = umass_model_lda.get_coherence()
+print('\nU_mass Score (u_mass): ', umass_score_lda)
+
+
 
 
 from gensim.corpora import Dictionary
