@@ -30,10 +30,10 @@ def preprocess_text(text):
 
 df['processed_reviewText'] = df['reviewText'].apply(preprocess_text)
 
-# Split the data with 2000 rows for testing and the rest for training
+# Split the data with 4000 rows for testing and the rest for training
 train_df, test_df = train_test_split(df, test_size=4000, random_state=42)
 
-# Continue with the vectorization and TF-IDF calculation on the training data
+# Vectorization and TF-IDF calculation on the training data
 def tokenization(data):
     vectorizer = TfidfVectorizer()
     tfidf_matrix = vectorizer.fit_transform(data['processed_reviewText'])
@@ -52,7 +52,7 @@ top_words, top_words_with_scores, vectorizer, tfidf_matrix = tokenization(train_
 for word, score in top_words_with_scores:
     print(f"Word: {word}, TF-IDF Score: {score}")
 
-# Optionally, you can save the processed training and testing datasets to CSV files
+# Training and testing datasets to CSV files
 train_df.to_csv('./processed_electronics_reviews_train.csv', index=False)
 test_df.to_csv('./processed_electronics_reviews_test.csv', index=False)
 
@@ -61,18 +61,6 @@ test_df.to_csv('./processed_electronics_reviews_test.csv', index=False)
 
 import scipy.sparse as sparse
 from corextopic import corextopic as ct
-# anchor_words = [
-#     ['work', 'last', 'break', 'reliable', 'durable', 'faulty', 'malfunction', 'defect'],  # Product Performance and Reliability
-#     ['good', 'great', 'excellent', 'bad', 'poor', 'disappoint', 'satisfy', 'happy', 'unhappy'],  # Customer Satisfaction and Sentiment
-#     ['easy', 'use', 'convenient', 'simple', 'difficult'],  # Usability and Convenience
-#     ['price', 'cheap', 'expensive', 'value', 'money', 'worth', 'affordable'],  # Price and Value for Money
-#     ['quality', 'sound', 'battery', 'power', 'screen', 'resolution', 'storage', 'capacity'],  # Product Features and Specifications
-#     ['look', 'design', 'style', 'appearance', 'aesthetic', 'build', 'material'],  # Product Aesthetics and Design
-#     ['last', 'durable', 'longevity', 'wear', 'tear', 'break', 'maintenance'],  # Product Durability and Longevity
-#     ['return', 'warranty', 'service', 'support', 'refund', 'exchange'],  # Customer Service and Warranty
-#     ['setup', 'install', 'ready', 'configure', 'assembly', 'manual', 'guide'],  # Ease of Setup and Installation
-#     ['connect', 'compatible', 'wireless', 'plug', 'interface', 'sync']  # Connectivity and Compatibility
-# ]
 
 anchor_words = [
     ['price', 'cost', 'money', 'buy', 'cheap'],
@@ -106,14 +94,13 @@ print(f'correlation: {topic_model.tc}')
 
 
 #calculating coherence scores
-# Assuming df['processed_reviewText'] contains your preprocessed documents
 documents = train_df['processed_reviewText'].tolist()
 tokenized_documents = [doc.split() for doc in documents]
 from gensim.corpora import Dictionary
 from gensim.models import CoherenceModel
-# Create a Gensim dictionary from the tokenized documents
+# Creating a Gensim dictionary from the tokenized documents
 dictionary = Dictionary(tokenized_documents)
-# Create a Gensim corpus using the dictionary
+# Creating a Gensim corpus using the dictionary
 corpus = [dictionary.doc2bow(text) for text in tokenized_documents]
 topic_coherence_scores = []
 for i, topic in enumerate(topic_words_all):
@@ -122,7 +109,7 @@ for i, topic in enumerate(topic_words_all):
     coherence_score_topic = coherence_model_topic.get_coherence()
     topic_coherence_scores.append(coherence_score_topic)
     print(f"Coherence Score for Topic {i+1} (C_V): {coherence_score_topic}")
-# Optionally, if you want to calculate the average coherence across all topics
+# Calculate the average coherence across all topics
 average_coherence = sum(topic_coherence_scores) / len(topic_coherence_scores)
 print(f"Average Coherence Score (C_V): {average_coherence}")
 # calculating u_mass coherence score
@@ -144,10 +131,9 @@ plt.show()
 
 
 #printing first 10 reviews categorized by the model from test_data
-# Assuming the 'vectorizer' and 'topic_model' are already fitted and 'topic_names' is defined
 from collections import defaultdict
 # Prepare the data
-reviews = test_df  # Assuming test_df is defined and preprocessed correctly
+reviews = test_df
 flattened_reviews = [review for review in reviews['processed_reviewText']]
 # Vectorize the reviews
 X_new = vectorizer.transform(reviews['processed_reviewText'].apply(preprocess_text).tolist())
