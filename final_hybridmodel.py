@@ -113,7 +113,7 @@ for i, topic in enumerate(topic_words_all):
 average_coherence = sum(topic_coherence_scores) / len(topic_coherence_scores)
 print(f"Average Coherence Score (C_V): {average_coherence}")
 # calculating u_mass coherence score
-coherence_model_umass = CoherenceModel(topics=[topic], texts=tokenized_documents, dictionary=dictionary, coherence='u_mass')
+coherence_model_umass = CoherenceModel(topics=[topic], texts=tokenized_documents, dictionary=dictionary, coherence='c_v')
 total_coherence_umass = coherence_model_umass.get_coherence()
 print(f"Total Coherence Score (U_Mass): {total_coherence_umass}")
 
@@ -159,13 +159,3 @@ for topic in topic_names:
 
 
 
-# #Normal prediction code
-# for i, topic_presence in enumerate(predicted_topics):
-
-#     predicted_topic_names = [topic_names[j] for j, present in enumerate(topic_presence) if present]
-#     predicted_topics_str = ', '.join(predicted_topic_names)
-    
-#     if predicted_topics_str:
-#         print(f"Review: {flattened_reviews[i]}\nPredicted Topics: {predicted_topics_str}\n")
-#     else:
-#         print(f"Review: {flattened_reviews[i]}\nPredicted Topics: None\n")
