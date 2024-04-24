@@ -12,12 +12,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import re
 import gensim
-from gensim import matutils, models
-import scipy.sparse
 from gensim import corpora, models
-from collections import defaultdict
-import operator
-import pprint
 
 from sklearn.feature_extraction.text import CountVectorizer
 nltk.download('omw-1.4')
@@ -27,21 +22,38 @@ nltk.download('wordnet')
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 
-csv_path = r'C:\Users\Sreekar\Downloads\electronics_sample.csv\electronics_sample.csv' 
-reviews_df = pd.read_csv(csv_path)
+reviews_df = pd.read_csv(r'C:\Users\Sreekar\Downloads\electronics_sample.csv\electronics_sample.csv' )
+if 'summary' in reviews_df.columns:
+    df.drop('summary', axis=1, inplace=True)
+reviews_df.dropna(subset=['reviewText'], inplace=True)
+stop_words.update(["i've", "i'am", "i'm"])
 
 def advanced_preprocess(text):
-    # Check if the input is a string, return an empty string if not
-    if not isinstance(text, str):
-        return ''
-    
     text = text.lower()
-    text = re.sub(r'[^a-zA-Z\s]', '', text)
-    # Tokenization
+    
     tokens = text.split()
-    tokens = [lemmatizer.lemmatize(token) for token in tokens if token not in stop_words]
-    return ' '.join(tokens)
-reviews_df['processed_reviews'] = reviews_df['reviewText'].apply(advanced_preprocess)    
+    
+    tokens = [word for word in tokens if word not in stop_words]
+    
+    text = ' '.join(tokens)
+    
+    text = re.sub(r'[^a-z\s]', '', text) 
+    
+    tokens = text.split()
+    
+    lemmatizer = WordNetLemmatizer()
+    
+    tokens = [lemmatizer.lemmatize(word, pos='v') for word in tokens]
+    
+    text = ' '.join(tokens)
+    
+    return text
+
+reviews_df['processed_reviews'] = reviews_df['reviewText'].apply(advanced_preprocess)
+print(reviews_df['processed_reviews'])
+
+from gensim import matutils, models
+import scipy.sparse
 
 tokenized_reviews = [doc.split() for doc in reviews_df['processed_reviews']]
 
@@ -53,8 +65,9 @@ corpus = [id2word.doc2bow(text) for text in tokenized_reviews]
 
 [[(id2word[id], freq) for id, freq in cp] for cp in corpus[:10]]
 
+from collections import defaultdict
+import operator
 
-# Aggregate word frequencies
 word_freq = defaultdict(int)
 for document in corpus:
     for word_id, freq in document:
@@ -64,21 +77,39 @@ total_docs = len(corpus)
 
 normalized_word_freq = {word_id: freq / total_docs for word_id, freq in word_freq.items()}
 
+# Sort normalized word frequencies
 sorted_normalized_word_freq = sorted(normalized_word_freq.items(), key=operator.itemgetter(1), reverse=True)
 
-# Print the top 50 normalized word frequencies
 for word_id, normalized_freq in sorted_normalized_word_freq[:50]:
     print(f"{id2word[word_id]}: {normalized_freq}")
-      
-lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_topics=10, passes=10, random_state=42)    
-
+ldamodel = models.LdaModel(corpus=corpus, id2word=id2word, num_topics=7, passes=10, random_state=42)
+lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_topics=7, passes=10, alpha='auto', eta='auto', random_state=42)    
+import pprint
 pprint.pprint(lda_model.print_topics())
-doc_lda = lda_model[corpus]    
+doc_lda = lda_model[corpus]
 
-# Define a threshold for topic assignment (e.g., 0.1 for 10% relevance)
+reviews_df['topic'] = [max(lda_model.get_document_topics(corp), key=lambda x: x[1])[0] for corp in corpus]
+print(reviews_df[['reviewText', 'topic']].head())
+
+# Define a threshold for topic assignment 
 threshold = 0.1
 reviews_df['topics'] = [
     [topic_num for topic_num, prop_topic in lda_model.get_document_topics(corp) if prop_topic >= threshold]
     for corp in corpus
 ]
 print(reviews_df[['reviewText', 'topics']].head())
+
+from gensim.models.coherencemodel import CoherenceModel
+
+coherence_model_lda_cv = CoherenceModel(model=ldamodel, texts=tokenized_reviews, dictionary=id2word, coherence='c_v')
+coherence_lda_cv = coherence_model_lda_cv.get_coherence()
+print('Basic LDA Coherence Score (C_v): ', coherence_lda_cv)
+coherence_model_lda_umass = CoherenceModel(model=ldamodel, corpus=corpus, dictionary=id2word, coherence="u_mass")
+coherence_lda_umass = coherence_model_lda_umass.get_coherence()
+print('Basic LDA Coherence Score (U_mass): ', coherence_lda_umass)
+coherence_model_lda_cv = CoherenceModel(model=lda_model, texts=tokenized_reviews, dictionary=id2word, coherence='c_v')
+coherence_lda_cv = coherence_model_lda_cv.get_coherence()
+print('Tuned LDA Coherence Score (C_v): ', coherence_lda_cv)
+coherence_model_lda_umass = CoherenceModel(model=lda_model, corpus=corpus, dictionary=id2word, coherence="u_mass")
+coherence_lda_umass = coherence_model_lda_umass.get_coherence()
+print('Tune LDA Coherence Score (U_mass): ', coherence_lda_umass)
