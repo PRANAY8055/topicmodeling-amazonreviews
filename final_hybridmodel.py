@@ -1,3 +1,8 @@
+""" 
+The below code buildsa topic model with gwnrates topics similar to LDA in order to compare our model with LDA
+"""
+
+
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -62,6 +67,7 @@ test_df.to_csv('./processed_electronics_reviews_test.csv', index=False)
 import scipy.sparse as sparse
 from corextopic import corextopic as ct
 
+#adding anchor words
 anchor_words = [
     ['price', 'cost', 'money', 'buy', 'cheap'],
     ['sound', 'speakers', 'headphones', 'radio', 'audio'],
@@ -78,6 +84,7 @@ doc_word = sparse.csr_matrix(tfidf_matrix)
 doc_word.shape # n_docs x m_words
 words = list(np.asarray(vectorizer.get_feature_names_out()))
 
+#training the model using anchor words
 topic_model = ct.Corex(n_hidden=7, max_iter = 12000, seed=2)
 topic_model.fit(doc_word, words=words, anchors=anchor_words, anchor_strength = 6)
 
