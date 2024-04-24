@@ -1,5 +1,5 @@
 """ 
-The below code buildsa topic model with gwnrates topics similar to LDA in order to compare our model with LDA
+The below code builds a topic model with generates topics similar to LDA in order to compare our model with LDA
 """
 
 
@@ -7,8 +7,14 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
+from corextopic import corextopic as ct
+from gensim.corpora import Dictionary
+from gensim.models import CoherenceModel
+from collections import defaultdict
+import scipy.sparse as sparse
 import pandas as pd
 import numpy as np
+import seaborn as sns
 import nltk
 import re
 
@@ -64,8 +70,7 @@ test_df.to_csv('./processed_electronics_reviews_test.csv', index=False)
 
 
 
-import scipy.sparse as sparse
-from corextopic import corextopic as ct
+
 
 #adding anchor words
 anchor_words = [
@@ -103,8 +108,7 @@ print(f'correlation: {topic_model.tc}')
 #calculating coherence scores
 documents = train_df['processed_reviewText'].tolist()
 tokenized_documents = [doc.split() for doc in documents]
-from gensim.corpora import Dictionary
-from gensim.models import CoherenceModel
+
 # Creating a Gensim dictionary from the tokenized documents
 dictionary = Dictionary(tokenized_documents)
 # Creating a Gensim corpus using the dictionary
@@ -124,7 +128,7 @@ coherence_model_umass = CoherenceModel(topics=[topic], texts=tokenized_documents
 total_coherence_umass = coherence_model_umass.get_coherence()
 print(f"Total Coherence Score (U_Mass): {total_coherence_umass}")
 
-import seaborn as sns
+
 # Create a DataFrame for the heatmap
 topic_labels = [f'Topic {i+1}' for i in range(len(topic_words_all))]
 coherence_df = pd.DataFrame({'Coherence Score': topic_coherence_scores}, index=topic_labels)
@@ -137,9 +141,7 @@ plt.show()
 
 
 
-#printing first 10 reviews categorized by the model from test_data
-from collections import defaultdict
-# Prepare the data
+# printing first 10 reviews categorized by the model from test_data
 reviews = test_df
 flattened_reviews = [review for review in reviews['processed_reviewText']]
 # Vectorize the reviews
