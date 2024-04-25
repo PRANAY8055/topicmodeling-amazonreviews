@@ -93,4 +93,5 @@ reviews_df['topics'] = [
     for corp in corpus
 ]
 
+
 print(reviews_df[['reviewText', 'topics']].head())
