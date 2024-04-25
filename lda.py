@@ -1,43 +1,58 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Mar 27 18:09:42 2024
 
-import numpy as np
+@author: Sreekar
+"""
+
 import pandas as pd
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import re
 import gensim
-from gensim import matutils, models
-import scipy.sparse
-from gensim import corpora, models
+from gensim import corpora
 from collections import defaultdict
 import operator
 import pprint
 
-from sklearn.feature_extraction.text import CountVectorizer
 nltk.download('omw-1.4')
 nltk.download('stopwords')
 nltk.download('wordnet')
 
-
-
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 
-csv_path = r'electronics_sample.csv' 
-reviews_df = pd.read_csv(csv_path)
+reviews_df = pd.read_csv('./electronics_sample.csv')
+reviews_df.drop('summary', axis=1, inplace=True)
+reviews_df.dropna(subset=['reviewText'], inplace=True)
 
-def advanced_preprocess(text):
-    # Check if the input is a string, return an empty string if not
-    if not isinstance(text, str):
-        return ''
-    
+stop_words.update(["i've", "i'am", "i'm"])
+
+# This is the first stage of the flow
+# Pre-processing the text
+def preprocess_text(text):
     text = text.lower()
-    text = re.sub(r'[^a-zA-Z\s]', '', text)
-    # Tokenization
+    
     tokens = text.split()
-    tokens = [lemmatizer.lemmatize(token) for token in tokens if token not in stop_words]
-    return ' '.join(tokens)
-reviews_df['processed_reviews'] = reviews_df['reviewText'].apply(advanced_preprocess)    
+    
+    tokens = [word for word in tokens if word not in stop_words]
+    
+    text = ' '.join(tokens)
+    
+    text = re.sub(r'[^a-z\s]', '', text) 
+    
+    tokens = text.split()
+    
+    lemmatizer = WordNetLemmatizer()
+    
+    tokens = [lemmatizer.lemmatize(word, pos='v') for word in tokens]
+    
+    text = ' '.join(tokens)
+    
+    return text
+
+reviews_df['processed_reviews'] = reviews_df['reviewText'].apply(preprocess_text)
 
 tokenized_reviews = [doc.split() for doc in reviews_df['processed_reviews']]
 
@@ -69,55 +84,13 @@ for word_id, normalized_freq in sorted_normalized_word_freq[:50]:
 lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_topics=10, passes=10, random_state=42)    
 
 pprint.pprint(lda_model.print_topics())
+doc_lda = lda_model[corpus]    
 
-from gensim.models.coherencemodel import CoherenceModel
+# Define a threshold for topic assignment (e.g., 0.1 for 10% relevance)
+threshold = 0.1
+reviews_df['topics'] = [
+    [topic_num for topic_num, prop_topic in lda_model.get_document_topics(corp) if prop_topic >= threshold]
+    for corp in corpus
+]
 
-# Compute Coherence Score using c_v measure
-coherence_model_lda = CoherenceModel(model=lda_model, texts=tokenized_reviews, dictionary=id2word, coherence='c_v')
-coherence_score_lda = coherence_model_lda.get_coherence()
-print('\nCoherence Score (c_v): ', coherence_score_lda)
-# Compute Coherence Score using u_mass measure
-umass_model_lda = CoherenceModel(model=lda_model, texts=tokenized_reviews, dictionary=id2word, coherence='u_mass')
-umass_score_lda = umass_model_lda.get_coherence()
-print('\nU_mass Score (u_mass): ', umass_score_lda)
-
-
-
-
-from gensim.corpora import Dictionary
-from gensim.models import CoherenceModel
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-# Assume 'documents', 'tokenized_documents', and 'dictionary' are already defined
-# Assume 'lda_model' is your trained LDA model
-# If not defined, set up as shown in previous explanations
-
-# Extracting the top words for each topic
-top_words_per_topic = []
-for t in range(lda_model.num_topics):
-    top_words_per_topic.append([word for word, _ in lda_model.show_topic(t, topn=10)])
-
-# Calculate the coherence score for each topic using the C_V measure
-topic_coherence_scores = []
-for top_words in top_words_per_topic:
-    coherence_model_topic = CoherenceModel(topics=[top_words], texts=tokenized_reviews, dictionary=id2word, coherence='c_v')
-    coherence_score_topic = coherence_model_topic.get_coherence()
-    topic_coherence_scores.append(coherence_score_topic)
-    print(f"Coherence Score for Topic {i+1} (C_V): {coherence_score_topic}")
-average_coherence = sum(topic_coherence_scores) / len(topic_coherence_scores)
-print(f"Average Coherence Score (C_V): {average_coherence}")
-# Create a DataFrame for the heatmap
-topic_labels = [f'Topic {i+1}' for i in range(len(top_words_per_topic))]
-coherence_df = pd.DataFrame({'Coherence Score': topic_coherence_scores}, index=topic_labels)
-
-# Plotting the heatmap using a red color palette
-plt.figure(figsize=(4, 8))
-sns.heatmap(coherence_df[['Coherence Score']], annot=True, cmap='Reds', fmt=".2f", linewidths=.5, cbar_kws={'label': 'Coherence Score'})
-plt.title('Topic-wise Coherence Scores for LDA Model')
-plt.ylabel('Topics')
-plt.show()
-
-
-
+print(reviews_df[['reviewText', 'topics']].head())
