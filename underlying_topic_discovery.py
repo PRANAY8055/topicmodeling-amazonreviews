@@ -72,7 +72,7 @@ top_words, top_words_with_scores, vectorizer, tfidf_matrix = tokenization(train_
 anchor_words = [
      ['easy', 'use', 'convenient', 'simple', 'difficult'],  # Usability and Convenience
     ['price', 'cheap', 'expensive', 'value', 'money', 'worth', 'affordable'],  # Price and Value for Money
-    ['return', 'warranty', 'service', 'support', 'refund', 'exchange'],  # Customer Service and Warranty
+    ['return', 'warranty', 'service', 'support'],  # Customer Service and Warranty
     ['setup', 'install', 'ready', 'configure', 'assembly', 'manual', 'guide'],  # Ease of Setup and Installation
     ['connect', 'compatible', 'wireless', 'plug', 'interface', 'sync']  # Connectivity and Compatibility
 ]
