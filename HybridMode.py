@@ -1,5 +1,5 @@
 """ 
-The below code builds a topic model with generates topics similar to LDA in order to compare our model with LDA
+The below code builds a  hybrid topic model topic model, and generates topics similar to LDA in order to compare our model with LDA
 """
 
 
