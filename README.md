@@ -1,6 +1,4 @@
-# topicmodeling-amazonreviews
-
-# NLP Project
+# NLP Project: topicmodeling-amazonreviews
 
 This repository contains the code for our NLP project, which includes the development of a hybrid topic modeling approach and comparisons with traditional LDA models.
 
@@ -21,9 +19,3 @@ This repository contains the code for our NLP project, which includes the develo
 - **Purpose**: Implements traditional unsupervised LDA topic modeling.
 - **Details**: This script is used to generate topics from our dataset, serving as a baseline for comparison with our hybrid model.
 
-## Quick Start
-
-To run any of the above scripts, you can use the following command in your terminal:
-
-```bash
-python filename.py
